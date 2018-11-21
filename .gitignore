@@ -1,0 +1,10 @@
+/.scons*
+/.cache
+*~
+*.o
+*.gcno
+*.gcda
+*.gcov
+*.info
+/ptwalker
+/coverage

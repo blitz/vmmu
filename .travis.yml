@@ -1,0 +1,17 @@
+dist: xenial
+language: cpp
+script: CXX=g++-8 scons
+compiler:
+  - gcc
+addons:
+  apt:
+    sources:
+      - ubuntu-toolchain-r-test
+    packages:
+      - scons
+      - gcc-8
+      - g++-8
+
+before_script:
+  - sudo mkdir -p /usr/include/catch2
+  - sudo curl -L https://github.com/catchorg/Catch2/releases/download/v2.5.0/catch.hpp -o /usr/include/catch2/catch.hpp
