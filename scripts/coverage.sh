@@ -2,15 +2,15 @@
 
 set -e -u
 
-TARGET=$1
+TARGET=ptwalker
 
 scons -Q -j$(nproc) --cache-disable --coverage "$1"
 
-lcov --base-directory . --directory . --zerocounters -q
+lcov --base-directory . --directory src --directory tesy --zerocounters -q
 ./"$TARGET"
 lcov --base-directory . --directory . -c -o coverage.info
 lcov --remove coverage.info "/usr/*" -o coverage.info
-lcov --remove coverage.info "*/test_*.cpp" -o coverage.info
-rm -r coverage/
+lcov --remove coverage.info "*/test/*" -o coverage.info
+rm -rf coverage/
 genhtml -o coverage/ -t "Page Table Walker" coverage.info
 

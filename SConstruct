@@ -11,6 +11,7 @@ AddOption("--coverage",
 env = Environment(ENV = os.environ,
                   CXX = os.environ.get("CXX", "g++"),
                   CXXFLAGS = "-Wall -std=c++17 -g -Wall",
+                  CPPPATH = ["#src"],
                   LINKFLAGS = "-g")
 
 if GetOption("enable_coverage"):
@@ -19,4 +20,4 @@ if GetOption("enable_coverage"):
 else:
     env.Append(CXXFLAGS = " -O2 ")
 
-env.Program("ptwalker", [Glob("*.cpp")])
+env.Program("ptwalker", [Glob("src/*.cpp") + Glob("test/*.cpp")])
