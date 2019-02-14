@@ -4,7 +4,7 @@ set -e -u
 
 TARGET=ptwalker
 
-scons -Q -j$(nproc) --cache-disable --coverage "$1"
+scons -Q -j$(nproc) --cache-disable --coverage "./$TARGET"
 
 lcov --base-directory . --directory src --directory tesy --zerocounters -q
 ./"$TARGET"
