@@ -6,8 +6,13 @@
 
 #include "utilities.hpp"
 
+// An exception that is thrown when the memory class is asked to access memory
+// that has no defined value.
 struct accessed_uninitialized_memory {
   uint64_t address;
+
+  accessed_uninitialized_memory() = delete;
+  accessed_uninitialized_memory(uint64_t address_) : address(address_) {}
 };
 
 // A memory backend for the page table walker that is useful for testing.
