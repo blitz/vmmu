@@ -4,42 +4,37 @@
 
 namespace {
 
-class test_memory_32 : public abstract_memory {
+// Default implementations for abstract methods that just abort.
+class test_memory_base : public abstract_memory {
+public:
 
-  memory<uint32_t> mem;
+  uint32_t read(uint64_t phys_addr, uint32_t) override { __builtin_trap(); }
+  uint64_t read(uint64_t phys_addr, uint64_t) override { __builtin_trap(); }
+
+  bool cmpxchg(uint64_t phys_addr, uint64_t expected, uint64_t new_value) override { __builtin_trap(); }
+  bool cmpxchg(uint64_t phys_addr, uint32_t expected, uint32_t new_value) override { __builtin_trap(); }
+};
+
+template <typename WORD>
+class test_memory final : public test_memory_base {
+
+  memory<WORD> mem;
 
 public:
 
-  uint64_t read(uint64_t phys_addr, uint64_t) override
-  {
-    __builtin_trap();
-  }
-
-  uint32_t read(uint64_t phys_addr, uint32_t) override
+  WORD read(uint64_t phys_addr, WORD) override
   {
     return mem.read(phys_addr);
   }
 
-  void write(uint64_t phys_addr, uint64_t value)
-  {
-    __builtin_trap();
-  }
-
-  void write(uint64_t phys_addr, uint32_t value)
+  void write(uint64_t phys_addr, WORD value)
   {
     mem.write(phys_addr, value);
   }
 
-  bool cmpxchg(uint64_t phys_addr, uint64_t expected, uint64_t new_value) override
+  bool cmpxchg(uint64_t phys_addr, WORD expected, WORD new_value) override
   {
-    __builtin_trap();
-  }
-
-  bool cmpxchg(uint64_t phys_addr, uint32_t expected, uint32_t new_value) override
-  {
-    // TODO The memory class should have direct support for this, to be able to
-    // test whether A/D flags are atomically updated.
-    if (read(phys_addr, uint32_t()) == expected) {
+    if (read(phys_addr, WORD()) == expected) {
       write(phys_addr, new_value);
       return true;
     } else {
@@ -47,6 +42,8 @@ public:
     }
   }
 };
+
+using test_memory_32 = test_memory<uint32_t>;
 
 } // namespace
 
