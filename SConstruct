@@ -13,7 +13,7 @@ env = Environment(ENV = os.environ,
                   CXX = os.environ.get("CXX", "g++"),
                   CXXFLAGS = "-Wall -std=c++17 -g -Wall",
                   CPPPATH = ["#src"],
-                  LINKFLAGS = "-g")
+                  LINKFLAGS = "-g ")
 
 if GetOption("enable_coverage"):
     env.Append(CXXFLAGS = " -Og --coverage ",
