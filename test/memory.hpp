@@ -44,13 +44,18 @@ private:
       return opc < rhs.opc or (opc == rhs.opc and address < rhs.address);
     }
 
+    bool operator==(operation_head const &rhs) const
+    {
+      return opc == rhs.opc and address == rhs.address;
+    }
+
     operation_head() = delete;
     operation_head(operation_type opc_, uint64_t address_)
       : opc(opc_), address(address_)
     {}
   };
 
-  struct operation : private operation_head {
+  struct operation : public operation_head {
     WORD value;
 
     operation() = delete;
@@ -62,7 +67,7 @@ private:
 
     static operation read(uint64_t address, WORD value)
     {
-      return operation(operation_type::WRITE, address, value);
+      return operation(operation_type::READ, address, value);
     }
 
     bool matches_read(uint64_t address_) const
@@ -153,5 +158,12 @@ public:
   void execute_after(operation_type op_type, uint64_t address, H &&async_handler)
   {
     async_handlers.emplace(operation_head {op_type, address}, std::forward<H>(async_handler));
+  }
+
+  // Count the number of operations at a given address.
+  size_t count_operations(operation_type op_type, uint64_t address) const
+  {
+    return std::count(history.begin(), history.end(),
+                      operation_head { op_type, address });
   }
 };

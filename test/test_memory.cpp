@@ -4,6 +4,8 @@
 #include <catch2/catch.hpp>
 #include "memory.hpp"
 
+using operation_type = memory<uint32_t>::operation_type;
+
 TEST_CASE("Memory can read and write data", "[memory]")
 {
   memory<uint32_t> mem;
@@ -41,7 +43,7 @@ TEST_CASE("Asynchronous handlers are called")
   SECTION("A handler is called for the correct operation") {
     bool called = false;
 
-    mem.execute_after(memory<uint32_t>::operation_type::WRITE, 4, bool_setter(&called));
+    mem.execute_after(operation_type::WRITE, 4, bool_setter(&called));
 
     mem.write(4, 0);
   }
@@ -49,7 +51,7 @@ TEST_CASE("Asynchronous handlers are called")
   SECTION("A handler is not called for the wrong address or operation") {
     bool called = false;
 
-    mem.execute_after(memory<uint32_t>::operation_type::READ, 4, bool_setter(&called));
+    mem.execute_after(operation_type::READ, 4, bool_setter(&called));
 
     mem.write(0, 0);
     mem.write(4, 0);
@@ -61,7 +63,7 @@ TEST_CASE("Asynchronous handlers are called")
     uint32_t read_value = ~0;
 
     mem.write(0, 1);
-    mem.execute_after(memory<uint32_t>::operation_type::WRITE, 0,
+    mem.execute_after(operation_type::WRITE, 0,
                              [&read_value] (memory<uint32_t> *m) { read_value = m->read(0); });
     mem.write(0, 2);
 
@@ -71,11 +73,25 @@ TEST_CASE("Asynchronous handlers are called")
   SECTION("A handler is called only once") {
     int count = 0;
 
-    mem.execute_after(memory<uint32_t>::operation_type::WRITE, 0, [&count] (...) { count++; });
+    mem.execute_after(operation_type::WRITE, 0, [&count] (...) { count++; });
 
     mem.write(0, 1);
     mem.write(0, 1);
 
     REQUIRE(count == 1);
   }
+}
+
+TEST_CASE("Operations are counted correctly")
+{
+  memory<uint32_t> mem;
+
+  REQUIRE(mem.count_operations(operation_type::WRITE, 0) == 0);
+  mem.write(0, 0);
+  REQUIRE(mem.count_operations(operation_type::WRITE, 0) == 1);
+  mem.write(0, 1);
+  REQUIRE(mem.count_operations(operation_type::WRITE, 0) == 2);
+  mem.read(0);
+  REQUIRE(mem.count_operations(operation_type::WRITE, 0) == 2);
+  REQUIRE(mem.count_operations(operation_type::READ, 0) == 1);
 }

@@ -41,6 +41,14 @@ public:
       return false;
     }
   }
+
+  using operation_type = typename memory<WORD>::operation_type;
+
+  template <typename H>
+  void execute_after(operation_type op_type, uint64_t address, H &&async_handler)
+  {
+    mem.execute_after(op_type, address, std::forward<H>(async_handler));
+  }
 };
 
 using test_memory_32 = test_memory<uint32_t>;
@@ -104,7 +112,7 @@ TEST_CASE("32-bit paging works without PSE", "[translate]")
   }
 }
 
-TEST_CASE("32-bit paging works PSE", "[translate]")
+TEST_CASE("32-bit paging works with PSE", "[translate]")
 {
   paging_state const s { RFLAGS_RSVD, CR0_PG, 0, CR4_PSE, 0, 0 };
   test_memory_32 mem;
@@ -121,7 +129,7 @@ TEST_CASE("32-bit paging works PSE", "[translate]")
     CHECK(tlbe.size() == (4 << 10 /* KiB */));
   }
 
-  SECTION("4MB large page read-only page is recognized without CR4.PSE") {
+  SECTION("4MB large page read-only page is recognized with CR4.PSE") {
     mem.write(0, uint32_t(PTE_P | PTE_PS));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
