@@ -49,6 +49,11 @@ public:
   {
     mem.execute_after(op_type, address, std::forward<H>(async_handler));
   }
+
+  size_t count_operations(operation_type op_type, uint64_t address) const
+  {
+    return mem.count_operations(op_type, address);
+  }
 };
 
 using test_memory_32 = test_memory<uint32_t>;
@@ -138,7 +143,26 @@ TEST_CASE("32-bit paging works with PSE", "[translate]")
     auto tlbe = std::get<tlb_entry>(res);
     CHECK(tlbe.size() == (4 << 20 /* MiB */));
   }
+}
 
+TEST_CASE("Access-once semantics")
+{
+  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0 };
+  test_memory_32 mem;
+
+  SECTION("Page table entries are read once when no A/D need to be set") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P | PTE_A));
+    mem.write(0x1000, uint32_t(PTE_P | PTE_A | PTE_D));
+
+    auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
+    REQUIRE(std::holds_alternative<tlb_entry>(res));
+
+    CHECK(mem.count_operations(test_memory_32::operation_type::READ, 0) == 1);
+    CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0) == 1);
+
+    CHECK(mem.count_operations(test_memory_32::operation_type::READ, 0x1000) == 1);
+    CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0x1000) == 1);
+  }
 }
 
 // TODO Test ignored bits in CR3.

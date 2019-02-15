@@ -117,7 +117,7 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
     return /* retry */ {};
 
   // Dirty flags only exist in leaf page table entries.
-  attr = tlb_attr::combine(attr, tlb_attr {table_entry & (is_leaf ? 0 : ~PTE_D)});
+  attr = tlb_attr::combine(attr, tlb_attr {table_entry & ~(is_leaf ? WORD(0) : PTE_D)});
 
   if (is_leaf) {
     uint64_t mask = (uint64_t(1) << LEVEL::get_page_frame_order()) - 1;
