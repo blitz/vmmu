@@ -102,19 +102,15 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
   // TODO Get some sort of smart pointer back, so the memory backend can do
   // cmpxchg on normal memory without having to lookup the actual location
   // again.
-  WORD table_entry = memory->read(table_entry_addr, WORD{});
+  WORD const table_entry = memory->read(table_entry_addr, WORD{});
+  WORD updated_entry = table_entry | PTE_A;
+
   bool is_present = table_entry & PTE_P;
   bool is_rsvd = LEVEL::has_reserved_bits_set(table_entry, state);
+  bool is_leaf = LEVEL::is_leaf(table_entry, state);
 
   if (unlikely(not is_present or is_rsvd))
     return get_pf_info(op, state, is_present, is_rsvd);
-
-  bool is_leaf = LEVEL::is_leaf(table_entry, state);
-
-  // Set accessed bit
-  if (unlikely(not (table_entry & PTE_A)) and
-      not memory->cmpxchg(table_entry_addr, table_entry, table_entry | WORD(PTE_A)))
-    return /* retry */ {};
 
   // Dirty flags only exist in leaf page table entries.
   attr = tlb_attr::combine(attr, tlb_attr {table_entry & ~(is_leaf ? WORD(0) : PTE_D)});
@@ -127,21 +123,22 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
     if (unlikely(not tlbe.allows(op, state)))
       return get_pf_info(op, state, true, false);
 
-    // Update dirty bit, if not already set.
-    //
-    // TODO Optimize to use one cmpxchg in case both A/D bits need to be
-    // updated. Otherwise, you can end up setting an A bit in a PTE that is not
-    // actually used for translation.
-    if (op.is_write() and unlikely(not attr.is_d())) {
-      if (unlikely(not memory->cmpxchg(table_entry_addr, table_entry, table_entry | WORD(PTE_D))))
-        return /* retry */ {};
-
+    if (op.is_write()) {
+      updated_entry |= PTE_D;
       tlbe.attr.set_d();
     }
+
+    if (unlikely(table_entry != updated_entry) and
+        not memory->cmpxchg(table_entry_addr, table_entry, updated_entry))
+      return /* retry */ {};
 
     return tlbe;
   } else {
     fast_assert(not is_leaf);
+
+    if (unlikely(table_entry != updated_entry) and
+        not memory->cmpxchg(table_entry_addr, table_entry, updated_entry))
+      return /* retry */ {};
 
     // Continue page table walk with next level.
     if constexpr (sizeof...(REST) != 0)
