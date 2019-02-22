@@ -151,6 +151,8 @@ TEST_CASE("Access-once semantics")
   test_memory_32 mem;
 
   SECTION("Page table entries are read once when no A/D need to be set") {
+    // These two already count as writes. So the write operations below are
+    // "off-by-one".
     mem.write(0,      0x1000 | uint32_t(PTE_P | PTE_A));
     mem.write(0x1000, uint32_t(PTE_P | PTE_A | PTE_D));
 
@@ -162,6 +164,45 @@ TEST_CASE("Access-once semantics")
 
     CHECK(mem.count_operations(test_memory_32::operation_type::READ, 0x1000) == 1);
     CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0x1000) == 1);
+  }
+
+  SECTION("Page table entries are read twice and written once when A/D bits need to be set") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P));
+    mem.write(0x1000, uint32_t(PTE_P));
+
+    auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
+    REQUIRE(std::holds_alternative<tlb_entry>(res));
+
+    CHECK(mem.count_operations(test_memory_32::operation_type::READ, 0) == 2);
+    CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0) == 2);
+
+    CHECK(mem.count_operations(test_memory_32::operation_type::READ, 0x1000) == 2);
+    CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0x1000) == 2);
+  }
+}
+
+TEST_CASE("Failed atomic updates result in retry")
+{
+  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0 };
+  test_memory_32 mem;
+
+  SECTION("Failed compare-exchange results in retry") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P));
+    mem.write(0x1000, 0xA000 | uint32_t(PTE_P));
+    mem.write(0x2000, 0xB000 | uint32_t(PTE_P));
+
+    // When the walker read the page directory entry, we switch the entry,
+    // before it can set the accessed flag.
+    mem.execute_after(test_memory_32::operation_type::READ, 0,
+                      [] (auto *m) {
+                        m->write(0, 0x2000 | uint32_t(PTE_P));
+                      });
+
+    auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
+    REQUIRE(std::holds_alternative<tlb_entry>(res));
+
+    auto tlbe = std::get<tlb_entry>(res);
+    CHECK(tlbe.phys_addr == 0xB000);
   }
 }
 
