@@ -27,6 +27,11 @@ public:
     return mem.read(phys_addr);
   }
 
+  WORD reads(uint64_t phys_addr)
+  {
+    return read(phys_addr, WORD());
+  }
+
   void write(uint64_t phys_addr, WORD value)
   {
     mem.write(phys_addr, value);
@@ -34,7 +39,7 @@ public:
 
   bool cmpxchg(uint64_t phys_addr, WORD expected, WORD new_value) override
   {
-    if (read(phys_addr, WORD()) == expected) {
+    if (reads(phys_addr) == expected) {
       write(phys_addr, new_value);
       return true;
     } else {
@@ -57,6 +62,13 @@ public:
 };
 
 using test_memory_32 = test_memory<uint32_t>;
+
+// A helper function, because catch2 doesn't understand & as operator.
+template <typename WORD, typename WORD2>
+static bool is_bit_set(WORD v, WORD2 bit)
+{
+  return v & bit;
+}
 
 } // namespace
 
@@ -203,6 +215,45 @@ TEST_CASE("Failed atomic updates result in retry")
 
     auto tlbe = std::get<tlb_entry>(res);
     CHECK(tlbe.phys_addr == 0xB000);
+  }
+}
+
+TEST_CASE("Dirty bit is set correctly")
+{
+  paging_state const s { RFLAGS_RSVD, CR0_PG | CR0_WP, 0, 0, 0, 0 };
+  test_memory_32 mem;
+
+  SECTION("Dirty bit is not set for read") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P));
+    mem.write(0x1000, uint32_t(PTE_P));
+
+    auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
+    CHECK(std::holds_alternative<tlb_entry>(res));
+
+    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
+    CHECK_FALSE(is_bit_set(mem.reads(0x1000), PTE_D));
+  }
+
+  SECTION("Dirty bit is not set for failed write") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P));
+    mem.write(0x1000, uint32_t(PTE_P));
+
+    auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
+    CHECK(std::holds_alternative<page_fault_info>(res));
+
+    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
+    CHECK_FALSE(is_bit_set(mem.reads(0x1000), PTE_D));
+  }
+
+  SECTION("Dirty bit is set in leaf level for write") {
+    mem.write(0,      0x1000 | uint32_t(PTE_P | PTE_W));
+    mem.write(0x1000, uint32_t(PTE_P | PTE_W));
+
+    auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
+    CHECK(std::holds_alternative<tlb_entry>(res));
+
+    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
+    CHECK      (is_bit_set(mem.reads(0x1000), PTE_D));
   }
 }
 
