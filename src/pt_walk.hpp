@@ -180,7 +180,9 @@ struct linear_memory_op {
   linear_memory_op(uint64_t linear_addr_, access_type type_,
                    supervisor_type sv_type_ = supervisor_type::EXPLICIT)
     : linear_addr(linear_addr_), type(type_), sv_type(sv_type_)
-  {}
+  {
+    fast_assert(not (is_implicit_supervisor() and is_instruction_fetch()));
+  }
 };
 
 // A TLB entry for an power-of-2 naturally aligned linear memory region.
@@ -205,8 +207,6 @@ struct tlb_entry {
   {
     uint64_t mask = match_mask();
 
-    fast_assert((~mask & phys_addr) == 0);
-
     if ((la & mask) == linear_addr)
       return (la & ~mask) | phys_addr;
 
@@ -229,7 +229,9 @@ struct tlb_entry {
 
   tlb_entry(uint64_t linear_addr_, uint64_t phys_addr_, uint8_t size_bits_, tlb_attr attr_)
     : linear_addr(linear_addr_), phys_addr(phys_addr_), size_bits(size_bits_), attr(attr_)
-  {}
+  {
+    fast_assert((~match_mask() & phys_addr) == 0);
+  }
 };
 
 // The interface for physical memory access.

@@ -4,8 +4,6 @@
 // Once all cases are covered by testing, we can dare to simplify.
 bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) const
 {
-  fast_assert(not (op.is_implicit_supervisor() and op.is_instruction_fetch()));
-
   auto mode = state.get_paging_mode();
 
   // No permission checking without paging.
