@@ -189,10 +189,8 @@ struct linear_memory_op {
 class tlb_entry {
   uint64_t linear_addr_;
   uint64_t phys_addr_;
-
-  uint8_t size_bits_;
-
   tlb_attr attr_;
+  uint8_t size_bits_;
 
 public:
   uint64_t linear_addr() const { return linear_addr_; }
@@ -228,7 +226,7 @@ public:
   tlb_entry() = delete;
 
   tlb_entry(uint64_t linear_addr, uint64_t phys_addr, uint8_t size_bits, tlb_attr attr)
-    : linear_addr_(linear_addr), phys_addr_(phys_addr), size_bits_(size_bits), attr_(attr)
+    : linear_addr_(linear_addr), phys_addr_(phys_addr), attr_(attr), size_bits_(size_bits)
   {
     fast_assert((~match_mask() & this->phys_addr()) == 0);
     fast_assert(size_bits_ < 64);
