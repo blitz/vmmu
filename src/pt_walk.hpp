@@ -263,3 +263,42 @@ using translate_result = std::variant<std::monostate, tlb_entry, page_fault_info
 // also guaranteed that the operation is allowed, or it returns page fault
 // information.
 translate_result translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory);
+
+// A very primitive fully associative TLB.
+//
+// Entries are inserted in FIFO order and we look through all cached entries to
+// find a match.
+template <size_t SIZE>
+class tlb {
+  size_t pos_ = 0;
+
+  static_assert(SIZE > 1);
+  std::array<std::optional<tlb_entry>, SIZE> entries_;
+
+public:
+
+  // Reset the TLB to its pristine (empty) state.
+  void clear() { *this = {}; }
+
+  // This method is semantically identical to the function with the same name
+  // above. It just caches its results in the TLB.
+  //
+  // TODO Write tests.
+  translate_result translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
+  {
+    for (size_t i = 0; i < entries_.size(); i++) {
+      auto const &entry = entries_[(pos_ + i) % entries_.size()];
+
+      if (entry and entry->translate(op.linear_addr) and entry->allows(op, state))
+        return entry;
+    }
+
+    auto res = ::translate(op, state, memory);
+
+    if (std::holds_alternative<tlb_entry>(res)) {
+      entries_[--pos_ % entries_.size()] = std::get<tlb_entry>(res);
+    }
+
+    return res;
+  }
+};
