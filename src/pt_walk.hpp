@@ -162,12 +162,12 @@ public:
 struct linear_memory_op {
   uint64_t linear_addr;
 
-  enum class access_type { READ, WRITE, EXECUTE };
+  enum class access_type : uint8_t { READ, WRITE, EXECUTE };
   access_type type;
 
   // Implicit accesses are accesses, such as reading the GDT, which should
   // always be treated as supervisor accesses.
-  enum class supervisor_type { IMPLICIT, EXPLICIT };
+  enum class supervisor_type : uint8_t { IMPLICIT, EXPLICIT };
   supervisor_type sv_type;
 
   bool is_write() const { return type == access_type::WRITE; }
