@@ -186,20 +186,20 @@ struct linear_memory_op {
 };
 
 // A TLB entry for an power-of-2 naturally aligned linear memory region.
-struct tlb_entry {
-  uint64_t linear_addr;
-  uint64_t phys_addr;
+class tlb_entry {
+  uint64_t linear_addr_;
+  uint64_t phys_addr_;
 
-  uint8_t size_bits;
+  uint8_t size_bits_;
 
-  tlb_attr attr;
+  tlb_attr attr_;
 
-  uint64_t size() const
-  {
-    fast_assert(size_bits < 64);
-
-    return 1ULL << size_bits;
-  }
+public:
+  uint64_t linear_addr() const { return linear_addr_; }
+  uint64_t phys_addr()   const { return phys_addr_; }
+  tlb_attr const &attr() const { return attr_; }
+  tlb_attr &attr()             { return attr_; }
+  uint64_t size()        const { return 1ULL << size_bits_; }
 
   uint64_t match_mask() const { return ~(size() - 1); }
 
@@ -207,8 +207,8 @@ struct tlb_entry {
   {
     uint64_t mask = match_mask();
 
-    if ((la & mask) == linear_addr)
-      return (la & ~mask) | phys_addr;
+    if ((la & mask) == linear_addr())
+      return (la & ~mask) | phys_addr();
 
     return {};
   }
@@ -227,10 +227,11 @@ struct tlb_entry {
 
   tlb_entry() = delete;
 
-  tlb_entry(uint64_t linear_addr_, uint64_t phys_addr_, uint8_t size_bits_, tlb_attr attr_)
-    : linear_addr(linear_addr_), phys_addr(phys_addr_), size_bits(size_bits_), attr(attr_)
+  tlb_entry(uint64_t linear_addr, uint64_t phys_addr, uint8_t size_bits, tlb_attr attr)
+    : linear_addr_(linear_addr), phys_addr_(phys_addr), size_bits_(size_bits), attr_(attr)
   {
-    fast_assert((~match_mask() & phys_addr) == 0);
+    fast_assert((~match_mask() & this->phys_addr()) == 0);
+    fast_assert(size_bits_ < 64);
   }
 };
 

@@ -82,13 +82,13 @@ TEST_CASE("Disabled paging works", "[translate]")
     REQUIRE(std::holds_alternative<tlb_entry>(tlbe_v));
 
     auto tlbe = std::get<tlb_entry>(tlbe_v);
-    CHECK(tlbe.attr.is_w());
-    CHECK(tlbe.attr.is_d());
-    CHECK_FALSE(tlbe.attr.is_xd());
-    CHECK(tlbe.attr.is_u());
+    CHECK(tlbe.attr().is_w());
+    CHECK(tlbe.attr().is_d());
+    CHECK_FALSE(tlbe.attr().is_xd());
+    CHECK(tlbe.attr().is_u());
 
-    CHECK(tlbe.phys_addr == 0);
-    CHECK(tlbe.linear_addr == 0);
+    CHECK(tlbe.phys_addr() == 0);
+    CHECK(tlbe.linear_addr() == 0);
     CHECK(tlbe.size() > (1ULL << 30));
   }
 }
@@ -110,12 +110,12 @@ TEST_CASE("32-bit paging works without PSE", "[translate]")
     REQUIRE(std::holds_alternative<tlb_entry>(res));
 
     auto tlbe = std::get<tlb_entry>(res);
-    CHECK(tlbe.linear_addr == 0);
-    CHECK(tlbe.phys_addr == 0);
+    CHECK(tlbe.linear_addr() == 0);
+    CHECK(tlbe.phys_addr() == 0);
     CHECK(tlbe.size() == (4 << 10 /* KiB */));
-    CHECK_FALSE(tlbe.attr.is_u());
-    CHECK_FALSE(tlbe.attr.is_w());
-    CHECK_FALSE(tlbe.attr.is_xd());
+    CHECK_FALSE(tlbe.attr().is_u());
+    CHECK_FALSE(tlbe.attr().is_w());
+    CHECK_FALSE(tlbe.attr().is_xd());
   }
 
   SECTION("4MB large page read-only page is not recognized without CR4.PSE") {
@@ -141,8 +141,8 @@ TEST_CASE("32-bit paging works with PSE", "[translate]")
     REQUIRE(std::holds_alternative<tlb_entry>(res));
 
     auto tlbe = std::get<tlb_entry>(res);
-    CHECK(tlbe.linear_addr == 0);
-    CHECK(tlbe.phys_addr == 0);
+    CHECK(tlbe.linear_addr() == 0);
+    CHECK(tlbe.phys_addr() == 0);
     CHECK(tlbe.size() == (4 << 10 /* KiB */));
   }
 
@@ -214,7 +214,7 @@ TEST_CASE("Failed atomic updates result in retry")
     REQUIRE(std::holds_alternative<tlb_entry>(res));
 
     auto tlbe = std::get<tlb_entry>(res);
-    CHECK(tlbe.phys_addr == 0xB000);
+    CHECK(tlbe.phys_addr() == 0xB000);
   }
 }
 

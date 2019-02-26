@@ -125,7 +125,7 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
 
     if (op.is_write()) {
       updated_entry |= PTE_D;
-      tlbe.attr.set_d();
+      tlbe.attr().set_d();
     }
 
     if (unlikely(table_entry != updated_entry) and

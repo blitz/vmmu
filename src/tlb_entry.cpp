@@ -14,11 +14,11 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     // For supervisor-mode accesses:
 
     // Data may be read (implicitly or explicitly) from any supervisor-mode address.
-    if (op.is_data_read() and not attr.is_u())
+    if (op.is_data_read() and not attr().is_u())
       return true;
 
     // Data reads from user-mode pages.
-    if (op.is_data_read() and attr.is_u()) {
+    if (op.is_data_read() and attr().is_u()) {
       // Access rights depend on the value of CR4.SMAP:
 
       // If CR4.SMAP = 0, data may be read from any user-mode address with a
@@ -45,7 +45,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     }
 
     // Data writes to supervisor-mode addresses.
-    if (op.is_write() and not attr.is_u()) {
+    if (op.is_write() and not attr().is_u()) {
       // Access rights depend on the value of CR0.WP:
 
       // If CR0.WP = 0, data may be written to any supervisor-mode address.
@@ -59,13 +59,13 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
       // the R/W flag is 0 in any paging-structure entry controlling the
       // translation.
       if (state.cr0_wp)
-        return attr.is_w();
+        return attr().is_w();
 
       unreachable();
     }
 
     // Data writes to user-mode addresses.
-    if (op.is_write() and attr.is_u()) {
+    if (op.is_write() and attr().is_u()) {
       // Access rights depend on the value of CR0.WP:
 
       // If CR0.WP = 0, access rights depend on the value of CR4.SMAP:
@@ -102,7 +102,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
         // user-mode address with a translation for which the R/W flag is 0 in
         // any paging-structure entry controlling the translation.
         if (not state.cr4_smap)
-          return attr.is_w();
+          return attr().is_w();
 
         // If CR4.SMAP = 1, access rights depend on the value of EFLAGS.AC and
         // whether the access is implicit or explicit:
@@ -116,7 +116,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
           // a translation for which the R/W flag is 0 in any paging-structure
           // entry controlling the translation.
           if (state.rflags_ac and not op.is_implicit_supervisor())
-            return attr.is_w();
+            return attr().is_w();
 
           // If EFLAGS.AC = 0 or the access is implicit, data may not be
           // written to any user-mode address.
@@ -129,7 +129,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     }
 
     // Instruction fetches from supervisor-mode addresses.
-    if (op.is_instruction_fetch() and not attr.is_u()) {
+    if (op.is_instruction_fetch() and not attr().is_u()) {
       // For 32-bit paging or if IA32_EFER.NXE = 0, instructions may be
       // fetched from any supervisor-mode address.
       if (mode == paging_mode::PM32 or not state.efer_nxe)
@@ -141,11 +141,11 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
       // controlling the translation; instructions may not be fetched from any
       // supervisor-mode address with a translation for which the XD flag is 1
       // in any paging-structure entry controlling the translation.
-      return not attr.is_xd();
+      return not attr().is_xd();
     }
 
     // Instruction fetches from user-mode addresses.
-    if (op.is_instruction_fetch() and attr.is_u()) {
+    if (op.is_instruction_fetch() and attr().is_u()) {
       // Access rights depend on the values of CR4.SMEP:
 
       // If CR4.SMEP = 0, access rights depend on the paging mode and the
@@ -162,7 +162,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
         // the translation; instructions may not be fetched from any user-mode
         // address with a translation for which the XD flag is 1 in any
         // paging-structure entry controlling the translation.
-        return not attr.is_xd();
+        return not attr().is_xd();
       }
 
       // If CR4.SMEP = 1, instructions may not be fetched from any user-mode address.
@@ -185,7 +185,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     // which read access is permitted.
     //
     // Data may not be read from any supervisor-mode address.
-    return attr.is_u();
+    return attr().is_u();
   }
 
   // Data writes.
@@ -196,11 +196,11 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     // the R/W flag is 1 in every paging-structure entry controlling the
     // translation and with a protection key for which write access is
     // permitted.
-    if (attr.is_u())
-      return attr.is_w();
+    if (attr().is_u())
+      return attr().is_w();
 
     // Data may not be written to any supervisor-mode address.
-    if (not attr.is_u())
+    if (not attr().is_u())
       return false;
 
     unreachable();
@@ -212,7 +212,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     // and the value of IA32_EFER.NXE:
 
     // Instructions may not be fetched from any supervisor-mode address.
-    if (not attr.is_u())
+    if (not attr().is_u())
       return false;
 
     // For 32-bit paging or if IA32_EFER.NXE = 0, instructions may be fetched
@@ -223,7 +223,7 @@ bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) co
     // For PAE paging or 4-level paging with IA32_EFER.NXE = 1, instructions may
     // be fetched from any user-mode address with a translation for which the XD
     // flag is 0 in every paging-structure entry controlling the translation.
-    return not attr.is_xd();
+    return not attr().is_xd();
   }
 
   // We forgot to handle a case.
