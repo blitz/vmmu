@@ -60,6 +60,7 @@ enum class paging_mode {
 // "Paging Modes and Control Bits".
 struct paging_state {
   uint64_t cr3;
+  std::array<uint64_t, 4> pdpte;
 
   bool cr0_wp, cr0_pg;
 
@@ -70,9 +71,7 @@ struct paging_state {
 
   bool rflags_ac;
 
-  uint8_t cpl;
-
-  std::array<uint64_t, 4> pdpte;
+  bool cpl_is_supervisor;
 
   // Compute the paging mode as per Intel SDM Vol. 3 4.1.1 "Three Paging Modes"
   // (which are actually four). The conditions are written slightly verbose to
@@ -94,22 +93,23 @@ struct paging_state {
     unreachable();
   }
 
-  bool is_supervisor() const
-  {
-    return cpl != 3;
-  }
+  // This returns whether the CPL indicates supervisor mode. This is unrelated
+  // to implicit supervisor accesses.
+  bool is_supervisor() const { return cpl_is_supervisor; }
 
   paging_state() = delete;
 
-  paging_state(uint64_t rflags_, uint64_t cr0_, uint64_t cr3_, uint64_t cr4_, uint64_t efer_, uint16_t ss_,
+  paging_state(uint64_t rflags_, uint64_t cr0_, uint64_t cr3_, uint64_t cr4_, uint64_t efer_, unsigned cpl_,
                decltype(pdpte) const &pdpte_ = {})
-    : cr3(cr3_), cr0_wp(cr0_ & CR0_WP), cr0_pg(cr0_ & CR0_PG),
+    : cr3(cr3_), pdpte(pdpte_), cr0_wp(cr0_ & CR0_WP), cr0_pg(cr0_ & CR0_PG),
       cr4_pse(cr4_ & CR4_PSE), cr4_pae(cr4_ & CR4_PAE), cr4_pge(cr4_ & CR4_PGE),
       cr4_smep(cr4_ & CR4_SMEP), cr4_smap(cr4_ & CR4_SMAP),
       efer_lme(efer_ & EFER_LME), efer_nxe(efer_ & EFER_NXE),
       rflags_ac(rflags_ & RFLAGS_AC),
-      cpl(ss_ & 0x3), pdpte(pdpte_)
-  {}
+      cpl_is_supervisor(cpl_ != 3)
+  {
+    fast_assert(cpl_ <= 3);
+  }
 };
 
 // A wrapper for TLB entry permissions.
