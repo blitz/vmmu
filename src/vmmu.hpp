@@ -292,7 +292,7 @@ public:
       auto const &entry = entries_[(pos_ + i) % entries_.size()];
 
       if (entry and entry->translate(op.linear_addr) and entry->allows(op, state))
-        return entry;
+        return *entry;
     }
 
     auto res = ::vmmu::translate(op, state, memory);
