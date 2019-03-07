@@ -3,9 +3,9 @@
 #include <type_traits>
 
 // TODO
-// - PSE-36
-// - PAE
 // - Reserved bits checking
+
+using namespace vmmu;
 
 namespace {
 
@@ -168,7 +168,7 @@ translate_result pae_walk(linear_memory_op const &op, paging_state const &state,
 
 } // namespace
 
-translate_result translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
+translate_result vmmu::translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
 {
   tlb_attr attr;
   translate_result result;

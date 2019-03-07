@@ -1,5 +1,7 @@
 #pragma once
 
+namespace vmmu {
+
 // Utilities
 
 inline bool likely(bool c)   { return __builtin_expect(c, true);  }
@@ -40,3 +42,5 @@ struct bit_range {
   }
 
 };
+
+} // namespace vmmu

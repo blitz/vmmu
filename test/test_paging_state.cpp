@@ -1,6 +1,8 @@
 #include <catch2/catch.hpp>
 #include "pt_walk.hpp"
 
+using namespace vmmu;
+
 TEST_CASE("Physical paging is recognized", "[paging_state]")
 {
   paging_state const s { RFLAGS_RSVD, 0, 0, 0, 0, 0 };

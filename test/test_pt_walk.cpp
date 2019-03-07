@@ -2,6 +2,8 @@
 #include "pt_walk.hpp"
 #include "memory.hpp"
 
+using namespace vmmu;
+
 namespace {
 
 // Default implementations for abstract methods that just abort.

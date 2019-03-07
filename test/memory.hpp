@@ -127,7 +127,7 @@ public:
 
   void write(uint64_t address, WORD value)
   {
-    fast_assert(is_naturally_aligned(address));
+    vmmu::fast_assert(is_naturally_aligned(address));
     async_handler_guard g {this, operation_type::WRITE, address};
 
     history.emplace_front(operation::write(address, value));
@@ -135,7 +135,7 @@ public:
 
   WORD read(uint64_t address)
   {
-    fast_assert(is_naturally_aligned(address));
+    vmmu::fast_assert(is_naturally_aligned(address));
     async_handler_guard g {this, operation_type::READ, address};
 
     auto it = std::find_if(history.begin(), history.end(),

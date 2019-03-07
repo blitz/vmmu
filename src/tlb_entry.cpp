@@ -1,8 +1,10 @@
 #include "pt_walk.hpp"
 
+using namespace vmmu;
+
 // I've tried to make the code match the written description in the manual 1:1.
 // Once all cases are covered by testing, we can dare to simplify.
-bool tlb_entry::allows(linear_memory_op const &op, paging_state const &state) const
+bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &state) const
 {
   auto mode = state.get_paging_mode();
 

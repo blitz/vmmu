@@ -1,6 +1,8 @@
 #include <catch2/catch.hpp>
 #include "pt_walk.hpp"
 
+using namespace vmmu;
+
 TEST_CASE("TLB entries match correctly", "[tlb_entry]")
 {
   SECTION("Match mask generation works") {

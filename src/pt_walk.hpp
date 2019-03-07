@@ -7,6 +7,8 @@
 
 #include "utilities.hpp"
 
+namespace vmmu {
+
 // Architecture definitions
 
 enum {
@@ -293,7 +295,7 @@ public:
         return entry;
     }
 
-    auto res = ::translate(op, state, memory);
+    auto res = ::vmmu::translate(op, state, memory);
 
     if (std::holds_alternative<tlb_entry>(res)) {
       entries_[--pos_ % entries_.size()] = std::get<tlb_entry>(res);
@@ -302,3 +304,5 @@ public:
     return res;
   }
 };
+
+} // namespace vmmu
