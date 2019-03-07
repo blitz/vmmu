@@ -7,7 +7,7 @@
 #include <map>
 #include <tuple>
 
-#include "utilities.hpp"
+#include "vmmu_utilities.hpp"
 
 // An exception that is thrown when the memory class is asked to access memory
 // that has no defined value.

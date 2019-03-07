@@ -5,7 +5,7 @@
 #include <optional>
 #include <variant>
 
-#include "utilities.hpp"
+#include "vmmu_utilities.hpp"
 
 namespace vmmu {
 
