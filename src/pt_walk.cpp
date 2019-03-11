@@ -50,7 +50,7 @@ struct level {
     return (not (FLAGS & RESPECTS_CR4_PSE) or state.cr4_pse) and (pte & PTE_PS);
   }
 
-  static bool has_reserved_bits_set(WORD pte, paging_state const &state)
+  static bool has_reserved_bits_set([[maybe_unused]] WORD pte, [[maybe_unused]] paging_state const &state)
   {
     // TODO Implement me
     return false;
@@ -151,8 +151,7 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
 // Special case of translate() for the PAE PDPTE lookup. We could possibly
 // squeeze it in the above scheme, but it's easier to just spell out directly
 // what happens for PDPTEs.
-translate_result pae_walk(linear_memory_op const &op, paging_state const &state, abstract_memory *memory,
-                          uint64_t table_base, tlb_attr attr = {})
+translate_result pae_walk(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
 {
   uint64_t pdpte = state.pdpte[bit_range<31, 30>::extract(op.linear_addr)];
   uint32_t next_table = bit_range<51, 12>::extract_no_shift(pdpte);
@@ -184,7 +183,7 @@ translate_result vmmu::translate(linear_memory_op const &op, paging_state const 
       result = walk<uint32_t, pm32_pd, pm32_pt>(op, state, memory, state.cr3 & 0xFFFFF000UL);
       break;
     case paging_mode::PM32_PAE:
-      result = pae_walk(op, state, memory, state.cr3 & 0xFFFFF000UL);
+      result = pae_walk(op, state, memory);
       break;
     case paging_mode::PM64_4LEVEL:
       result = walk<uint64_t, pm64_pml4, pm64_pdpt, pm64_pd, pm64_pt>(op, state, memory, state.cr3 & ~0xFFFULL);
