@@ -47,7 +47,7 @@ struct level {
     if (not (FLAGS & HAS_PS))
       return false;
 
-    return (not (FLAGS & RESPECTS_CR4_PSE) or state.cr4_pse) and (pte & PTE_PS);
+    return (not (FLAGS & RESPECTS_CR4_PSE) or state.get_cr4_pse()) and (pte & PTE_PS);
   }
 
   static bool has_reserved_bits_set([[maybe_unused]] WORD pte, [[maybe_unused]] paging_state const &state)
@@ -86,7 +86,7 @@ page_fault_info get_pf_info(linear_memory_op const &op, paging_state const &stat
   if (present and reserved_bits_set)
     error |= EC_RSVD;
 
-  if (op.is_instruction_fetch() and (state.cr4_smep or (state.cr4_pae and state.efer_nxe)))
+  if (op.is_instruction_fetch() and (state.get_cr4_smep() or (state.get_cr4_pae() and state.get_efer_nxe())))
     error |= EC_I;
 
   return { op.linear_addr, error };
@@ -153,7 +153,7 @@ translate_result walk(linear_memory_op const &op, paging_state const &state, abs
 // what happens for PDPTEs.
 translate_result pae_walk(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
 {
-  uint64_t pdpte = state.pdpte[bit_range<31, 30>::extract(op.linear_addr)];
+  uint64_t pdpte = state.get_pdpte(bit_range<31, 30>::extract(op.linear_addr));
   uint32_t next_table = bit_range<51, 12>::extract_no_shift(pdpte);
 
   if (not (pdpte & PTE_P))
@@ -180,13 +180,13 @@ translate_result vmmu::translate(linear_memory_op const &op, paging_state const 
       result = tlb_entry::no_paging();
       break;
     case paging_mode::PM32:
-      result = walk<uint32_t, pm32_pd, pm32_pt>(op, state, memory, state.cr3 & 0xFFFFF000UL);
+      result = walk<uint32_t, pm32_pd, pm32_pt>(op, state, memory, state.get_cr3() & 0xFFFFF000UL);
       break;
     case paging_mode::PM32_PAE:
       result = pae_walk(op, state, memory);
       break;
     case paging_mode::PM64_4LEVEL:
-      result = walk<uint64_t, pm64_pml4, pm64_pdpt, pm64_pd, pm64_pt>(op, state, memory, state.cr3 & ~0xFFFULL);
+      result = walk<uint64_t, pm64_pml4, pm64_pdpt, pm64_pd, pm64_pt>(op, state, memory, state.get_cr3() & ~0xFFFULL);
       break;
     default:
       __builtin_trap();

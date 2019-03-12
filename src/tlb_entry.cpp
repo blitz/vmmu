@@ -25,21 +25,21 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
 
       // If CR4.SMAP = 0, data may be read from any user-mode address with a
       // protection key for which read access is permitted.
-      if (not state.cr4_smap)
+      if (not state.get_cr4_smap())
         return true;
 
       // If CR4.SMAP = 1, access rights depend on the value of EFLAGS.AC and
       // whether the access is implicit or explicit:
-      if (state.cr4_smap) {
+      if (state.get_cr4_smap()) {
         // If EFLAGS.AC = 1 and the access is explicit, data may be read from
         // any user-mode address with a protection key for which read access
         // is permitted.
-        if (state.rflags_ac and not op.is_implicit_supervisor())
+        if (state.get_rflags_ac() and not op.is_implicit_supervisor())
           return true;
 
         // If EFLAGS.AC = 0 or the access is implicit, data may not be read
         // from any user-mode address.
-        if (not state.rflags_ac or op.is_implicit_supervisor())
+        if (not state.get_rflags_ac() or op.is_implicit_supervisor())
           return false;
       }
 
@@ -51,7 +51,7 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
       // Access rights depend on the value of CR0.WP:
 
       // If CR0.WP = 0, data may be written to any supervisor-mode address.
-      if (not state.cr0_wp)
+      if (not state.get_cr0_wp())
         return true;
 
       // If CR0.WP = 1, data may be written to any supervisor-mode address
@@ -60,7 +60,7 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
       // written to any supervisor-mode address with a translation for which
       // the R/W flag is 0 in any paging-structure entry controlling the
       // translation.
-      if (state.cr0_wp)
+      if (state.get_cr0_wp())
         return attr().is_w();
 
       unreachable();
@@ -71,24 +71,24 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
       // Access rights depend on the value of CR0.WP:
 
       // If CR0.WP = 0, access rights depend on the value of CR4.SMAP:
-      if (not state.cr0_wp) {
+      if (not state.get_cr0_wp()) {
         // If CR4.SMAP = 0, data may be written to any user-mode address with
         // a protection key for which write access is permitted.
-        if (not state.cr4_smap)
+        if (not state.get_cr4_smap())
           return true;
 
         // If CR4.SMAP = 1, access rights depend on the value of EFLAGS.AC and
         // whether the access is implicit or explicit.
-        if (state.cr4_smap) {
+        if (state.get_cr4_smap()) {
           // If EFLAGS.AC = 1 and the access is explicit, data may be written
           // to any user-mode address with a protection key for which write
           // access is permitted.
-          if (state.rflags_ac and not op.is_implicit_supervisor())
+          if (state.get_rflags_ac() and not op.is_implicit_supervisor())
             return true;
 
           // If EFLAGS.AC = 0 or the access is implicit, data may not be
           // written to any user-mode address.
-          if (not state.rflags_ac or op.is_implicit_supervisor())
+          if (not state.get_rflags_ac() or op.is_implicit_supervisor())
             return false;
 
           unreachable();
@@ -96,19 +96,19 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
       }
 
       // If CR0.WP = 1, access rights depend on the value of CR4.SMAP:
-      if (state.cr0_wp) {
+      if (state.get_cr0_wp()) {
         // If CR4.SMAP = 0, data may be written to any user-mode address with
         // a translation for which the R/W flag is 1 in every paging-structure
         // entry controlling the translation and with a protection key for
         // which write access is permitted; Data may not be written to any
         // user-mode address with a translation for which the R/W flag is 0 in
         // any paging-structure entry controlling the translation.
-        if (not state.cr4_smap)
+        if (not state.get_cr4_smap())
           return attr().is_w();
 
         // If CR4.SMAP = 1, access rights depend on the value of EFLAGS.AC and
         // whether the access is implicit or explicit:
-        if (state.cr4_smap) {
+        if (state.get_cr4_smap()) {
 
           // If EFLAGS.AC = 1 and the access is explicit, data may be written
           // to any user-mode address with a translation for which the R/W
@@ -117,12 +117,12 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
           // permitted; data may not be written to any user-mode address with
           // a translation for which the R/W flag is 0 in any paging-structure
           // entry controlling the translation.
-          if (state.rflags_ac and not op.is_implicit_supervisor())
+          if (state.get_rflags_ac() and not op.is_implicit_supervisor())
             return attr().is_w();
 
           // If EFLAGS.AC = 0 or the access is implicit, data may not be
           // written to any user-mode address.
-          if (not state.rflags_ac or op.is_implicit_supervisor())
+          if (not state.get_rflags_ac() or op.is_implicit_supervisor())
             return false;
 
           unreachable();
@@ -134,7 +134,7 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
     if (op.is_instruction_fetch() and not attr().is_u()) {
       // For 32-bit paging or if IA32_EFER.NXE = 0, instructions may be
       // fetched from any supervisor-mode address.
-      if (mode == paging_mode::PM32 or not state.efer_nxe)
+      if (mode == paging_mode::PM32 or not state.get_efer_nxe())
         return true;
 
       // For PAE paging or 4-level paging with IA32_EFER.NXE = 1, instructions
@@ -152,10 +152,10 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
 
       // If CR4.SMEP = 0, access rights depend on the paging mode and the
       // value of IA32_EFER.NXE:
-      if (not state.cr4_smep) {
+      if (not state.get_cr4_smep()) {
         // For 32-bit paging or if IA32_EFER.NXE = 0, instructions may be
         // fetched from any user-mode address.
-        if (mode == paging_mode::PM32 or not state.efer_nxe)
+        if (mode == paging_mode::PM32 or not state.get_efer_nxe())
           return true;
 
         // For PAE paging or 4-level paging with IA32_EFER.NXE = 1, instructions
@@ -168,7 +168,7 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
       }
 
       // If CR4.SMEP = 1, instructions may not be fetched from any user-mode address.
-      if (state.cr4_smep)
+      if (state.get_cr4_smep())
         return false;
 
       unreachable();
@@ -219,7 +219,7 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
 
     // For 32-bit paging or if IA32_EFER.NXE = 0, instructions may be fetched
     // from any user-mode address.
-    if (mode == paging_mode::PM32 or not state.efer_nxe)
+    if (mode == paging_mode::PM32 or not state.get_efer_nxe())
       return true;
 
     // For PAE paging or 4-level paging with IA32_EFER.NXE = 1, instructions may

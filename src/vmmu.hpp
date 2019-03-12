@@ -60,13 +60,13 @@ enum class paging_mode {
 
 // Contains CPU state necessary for page table walks. See Intel SDM Vol. 3 4.1
 // "Paging Modes and Control Bits".
-struct paging_state {
+class paging_state {
   uint64_t cr3;
   std::array<uint64_t, 4> pdpte;
 
   bool cr0_wp, cr0_pg;
 
-  bool cr4_pse, cr4_pae, cr4_pge;
+  bool cr4_pse, cr4_pae;
   bool cr4_smep, cr4_smap;
 
   bool efer_lme, efer_nxe;
@@ -74,6 +74,23 @@ struct paging_state {
   bool rflags_ac;
 
   bool cpl_is_supervisor;
+
+public:
+
+  uint64_t get_pdpte(size_t i) const { fast_assert(i < pdpte.size()); return pdpte[i]; }
+
+  uint64_t get_cr3()   const { return cr3; }
+
+  bool get_cr0_wp()    const { return cr0_wp; }
+  bool get_cr0_pg()    const { return cr0_pg; }
+
+  bool get_cr4_pse()   const { return cr4_pse; }
+  bool get_cr4_pae()   const { return cr4_pae; }
+  bool get_cr4_smep()  const { return cr4_smep; }
+  bool get_cr4_smap()  const { return cr4_smap; }
+
+  bool get_efer_nxe()  const { return efer_nxe; }
+  bool get_rflags_ac() const { return rflags_ac; }
 
   // Compute the paging mode as per Intel SDM Vol. 3 4.1.1 "Three Paging Modes"
   // (which are actually four). The conditions are written slightly verbose to
@@ -104,7 +121,7 @@ struct paging_state {
   paging_state(uint64_t rflags_, uint64_t cr0_, uint64_t cr3_, uint64_t cr4_, uint64_t efer_, unsigned cpl_,
                decltype(pdpte) const &pdpte_ = {})
     : cr3(cr3_), pdpte(pdpte_), cr0_wp(cr0_ & CR0_WP), cr0_pg(cr0_ & CR0_PG),
-      cr4_pse(cr4_ & CR4_PSE), cr4_pae(cr4_ & CR4_PAE), cr4_pge(cr4_ & CR4_PGE),
+      cr4_pse(cr4_ & CR4_PSE), cr4_pae(cr4_ & CR4_PAE),
       cr4_smep(cr4_ & CR4_SMEP), cr4_smap(cr4_ & CR4_SMAP),
       efer_lme(efer_ & EFER_LME), efer_nxe(efer_ & EFER_NXE),
       rflags_ac(rflags_ & RFLAGS_AC),
