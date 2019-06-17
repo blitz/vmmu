@@ -5,6 +5,7 @@
 #include <optional>
 #include <variant>
 
+#include "compiler.hpp"
 #include "vmmu_utilities.hpp"
 
 namespace vmmu {
@@ -303,7 +304,7 @@ public:
   // above. It just caches its results in the TLB.
   //
   // TODO Write tests.
-  translate_result translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
+  translate_result __VMMU_UBSAN_NO_UNSIGNED_OVERFLOW__ translate(linear_memory_op const &op, paging_state const &state, abstract_memory *memory)
   {
     for (size_t i = 0; i < entries_.size(); i++) {
       auto const &entry = entries_[(pos_ + i) % entries_.size()];
