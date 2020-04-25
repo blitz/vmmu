@@ -37,6 +37,11 @@ let
       coverage = true;
     };
 
+    asan = {
+      buildType = "Debug";
+      asan = true;
+    };
+
     default = { buildType = "Release"; };
   };
 

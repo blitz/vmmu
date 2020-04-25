@@ -1,5 +1,5 @@
-{ stdenv, lib, cmake, ninja, catch2, nix-gitignore, gcovr, python3Packages, buildType ? "Debug"
-, coverage ? false }:
+{ stdenv, lib, cmake, ninja, catch2, nix-gitignore, gcovr, python3Packages
+, buildType ? "Debug", coverage ? false, asan ? false }:
 
 stdenv.mkDerivation {
   pname = "vmmu";
@@ -11,7 +11,10 @@ stdenv.mkDerivation {
   checkInputs = [ catch2 ];
 
   cmakeBuildType = buildType;
-  cmakeFlags = [ "-DBUILD_COVERAGE=${if coverage then "ON" else "OFF"}" ];
+  cmakeFlags = [
+    "-DBUILD_COVERAGE=${if coverage then "ON" else "OFF"}"
+    "-DASAN=${if asan then "ON" else "OFF"}"
+  ];
 
   doCheck = true;
 }
