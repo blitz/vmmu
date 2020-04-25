@@ -1,4 +1,6 @@
-[![Build Status](https://travis-ci.org/blitz/vmmu.svg?branch=master)](https://travis-ci.org/blitz/vmmu)
+[![stability-experimental](https://img.shields.io/badge/stability-experimental-orange.svg)](https://github.com/emersion/stability-badges#experimental)
+![GitHub](https://img.shields.io/github/license/blitz/vmmu.svg)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/blitz/vmmu)
 
 👷 Work in Progress! Check back later. 👷
 
