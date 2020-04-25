@@ -3,7 +3,7 @@
 
 stdenv.mkDerivation {
   pname = "vmmu";
-  version = "1.0.0";
+  version = "1.0.0-dev";
 
   src = nix-gitignore.gitignoreSource [ ".git" ".github" "nix" "*.nix" ] ../.;
 
