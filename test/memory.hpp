@@ -25,12 +25,12 @@ struct accessed_uninitialized_memory {
 // accessed multiple times (TOCTOU bugs!) or whether the correct atomic
 // operations were used.
 template <typename WORD>
-class memory {
+class memory
+{
 public:
   enum class operation_type { READ, WRITE };
 
 private:
-
   using this_t = memory<WORD>;
 
   struct operation_head {
@@ -50,9 +50,7 @@ private:
     }
 
     operation_head() = delete;
-    operation_head(operation_type opc_, uint64_t address_)
-      : opc(opc_), address(address_)
-    {}
+    operation_head(operation_type opc_, uint64_t address_) : opc(opc_), address(address_) {}
   };
 
   struct operation : public operation_head {
@@ -76,10 +74,10 @@ private:
     }
 
   private:
-
     operation(operation_type opc_, uint64_t address_, WORD value_)
-      : operation_head(opc_, address_), value(value_)
-    {}
+        : operation_head(opc_, address_), value(value_)
+    {
+    }
   };
 
   // Log of all operations. From new to old, i.e. new operations are added to
@@ -109,22 +107,16 @@ private:
 
     async_handler_guard() = delete;
     async_handler_guard(this_t *memory_, operation_type type_, uint64_t address_)
-      : memory(memory_), op(type_, address_)
-    {}
-
-    ~async_handler_guard()
+        : memory(memory_), op(type_, address_)
     {
-      memory->maybe_execute_async_handler(op);
     }
+
+    ~async_handler_guard() { memory->maybe_execute_async_handler(op); }
   };
 
-  bool is_naturally_aligned(uint64_t address)
-  {
-    return (address % sizeof(WORD)) == 0;
-  }
+  bool is_naturally_aligned(uint64_t address) { return (address % sizeof(WORD)) == 0; }
 
 public:
-
   void write(uint64_t address, WORD value)
   {
     vmmu::fast_assert(is_naturally_aligned(address));
@@ -139,10 +131,10 @@ public:
     async_handler_guard g {this, operation_type::READ, address};
 
     auto it = std::find_if(history.begin(), history.end(),
-                           [address] (auto const &op) { return op.matches_read(address); });
+                           [address](auto const &op) { return op.matches_read(address); });
 
     if (it == history.end()) {
-      throw accessed_uninitialized_memory { address };
+      throw accessed_uninitialized_memory {address};
     } else {
       history.emplace_front(operation::read(address, it->value));
       return it->value;
@@ -163,7 +155,6 @@ public:
   // Count the number of operations at a given address.
   size_t count_operations(operation_type op_type, uint64_t address) const
   {
-    return std::count(history.begin(), history.end(),
-                      operation_head { op_type, address });
+    return std::count(history.begin(), history.end(), operation_head {op_type, address});
   }
 };

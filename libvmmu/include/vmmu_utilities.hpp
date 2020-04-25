@@ -1,22 +1,32 @@
 #pragma once
 
-namespace vmmu {
-
+namespace vmmu
+{
 // Utilities
 
-inline bool likely(bool c)   { return __builtin_expect(c, true);  }
-inline bool unlikely(bool c) { return __builtin_expect(c, false); }
+inline bool likely(bool c)
+{
+  return __builtin_expect(c, true);
+}
+inline bool unlikely(bool c)
+{
+  return __builtin_expect(c, false);
+}
 
-[[noreturn]] inline void unreachable() { __builtin_unreachable(); }
+[[noreturn]] inline void unreachable()
+{
+  __builtin_unreachable();
+}
 
 inline void fast_assert(bool c)
 {
-  if (unlikely(not c)) __builtin_trap();
+  if (unlikely(not c))
+    __builtin_trap();
 }
 
 // Bit manipulation
 
-template<int HI, int LO>
+template <int HI, int LO>
 struct bit_range {
   static_assert(HI >= LO);
 
@@ -30,17 +40,10 @@ struct bit_range {
   }
 
   // Return a mask that covers the given bit range.
-  static uint64_t mask()
-  {
-    return ((uint64_t(1) << (1 + HI - LO)) - 1) << LO;
-  }
+  static uint64_t mask() { return ((uint64_t(1) << (1 + HI - LO)) - 1) << LO; }
 
   // Masks everything in the given value except the bits from hi to lo.
-  static uint64_t extract_no_shift(uint64_t value)
-  {
-    return value & mask();
-  }
-
+  static uint64_t extract_no_shift(uint64_t value) { return value & mask(); }
 };
 
-} // namespace vmmu
+}  // namespace vmmu

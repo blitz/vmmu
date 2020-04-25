@@ -109,7 +109,6 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
         // If CR4.SMAP = 1, access rights depend on the value of EFLAGS.AC and
         // whether the access is implicit or explicit:
         if (state.get_cr4_smap()) {
-
           // If EFLAGS.AC = 1 and the access is explicit, data may be written
           // to any user-mode address with a translation for which the R/W
           // flag is 1 in every paging-structure entry controlling the

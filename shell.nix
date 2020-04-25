@@ -4,7 +4,7 @@
 }:
 
 pkgs.mkShell {
-  #inputsFrom = with pkgs; [ hello gnutar ];
+  inputsFrom = [(import ./. { inherit sources nixpkgs pkgs; })];
 
-  buildInputs = [ pkgs.niv pkgs.cmake pkgs.ninja pkgs.cmake-format pkgs.catch2 ];
+  buildInputs = with pkgs; [ niv cmake-format clang-tools ];
 }

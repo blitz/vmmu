@@ -2,6 +2,7 @@
 // page table walker tests.
 
 #include <catch2/catch.hpp>
+
 #include "memory.hpp"
 
 using operation_type = memory<uint32_t>::operation_type;
@@ -10,11 +11,13 @@ TEST_CASE("Memory can read and write data", "[memory]")
 {
   memory<uint32_t> mem;
 
-  SECTION("Reading uninitialized memory throws") {
+  SECTION("Reading uninitialized memory throws")
+  {
     REQUIRE_THROWS_AS(mem.read(0), accessed_uninitialized_memory);
   }
 
-  SECTION("Written memory can be read") {
+  SECTION("Written memory can be read")
+  {
     mem.write(0, 123);
     mem.write(12, 456);
 
@@ -22,7 +25,8 @@ TEST_CASE("Memory can read and write data", "[memory]")
     REQUIRE(mem.read(12) == 456);
   }
 
-  SECTION("New writes overwrite older ones") {
+  SECTION("New writes overwrite older ones")
+  {
     mem.write(0, 123);
     mem.write(0, 456);
 
@@ -33,14 +37,15 @@ TEST_CASE("Memory can read and write data", "[memory]")
 // Return a function that sets a boolean value when it's called.
 static auto bool_setter(bool *b)
 {
-  return [b] (...) { *b = true; };
+  return [b](...) { *b = true; };
 }
 
 TEST_CASE("Asynchronous handlers are called")
 {
   memory<uint32_t> mem;
 
-  SECTION("A handler is called for the correct operation") {
+  SECTION("A handler is called for the correct operation")
+  {
     bool called = false;
 
     mem.execute_after(operation_type::WRITE, 4, bool_setter(&called));
@@ -48,7 +53,8 @@ TEST_CASE("Asynchronous handlers are called")
     mem.write(4, 0);
   }
 
-  SECTION("A handler is not called for the wrong address or operation") {
+  SECTION("A handler is not called for the wrong address or operation")
+  {
     bool called = false;
 
     mem.execute_after(operation_type::READ, 4, bool_setter(&called));
@@ -59,21 +65,23 @@ TEST_CASE("Asynchronous handlers are called")
     CHECK_FALSE(called);
   }
 
-  SECTION("A handler is called after the operation it matched on") {
+  SECTION("A handler is called after the operation it matched on")
+  {
     uint32_t read_value = ~0;
 
     mem.write(0, 1);
     mem.execute_after(operation_type::WRITE, 0,
-                             [&read_value] (memory<uint32_t> *m) { read_value = m->read(0); });
+                      [&read_value](memory<uint32_t> *m) { read_value = m->read(0); });
     mem.write(0, 2);
 
     REQUIRE(read_value == 2);
   }
 
-  SECTION("A handler is called only once") {
+  SECTION("A handler is called only once")
+  {
     int count = 0;
 
-    mem.execute_after(operation_type::WRITE, 0, [&count] (...) { count++; });
+    mem.execute_after(operation_type::WRITE, 0, [&count](...) { count++; });
 
     mem.write(0, 1);
     mem.write(0, 1);

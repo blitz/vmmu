@@ -1,43 +1,40 @@
 #include <catch2/catch.hpp>
-#include "vmmu.hpp"
+
 #include "memory.hpp"
+#include "vmmu.hpp"
 
 using namespace vmmu;
 
-namespace {
-
+namespace
+{
 // Default implementations for abstract methods that just abort.
-class test_memory_base : public abstract_memory {
+class test_memory_base : public abstract_memory
+{
 public:
-
   uint32_t read(uint64_t phys_addr, uint32_t) override { __builtin_trap(); }
   uint64_t read(uint64_t phys_addr, uint64_t) override { __builtin_trap(); }
 
-  bool cmpxchg(uint64_t phys_addr, uint64_t expected, uint64_t new_value) override { __builtin_trap(); }
-  bool cmpxchg(uint64_t phys_addr, uint32_t expected, uint32_t new_value) override { __builtin_trap(); }
+  bool cmpxchg(uint64_t phys_addr, uint64_t expected, uint64_t new_value) override
+  {
+    __builtin_trap();
+  }
+  bool cmpxchg(uint64_t phys_addr, uint32_t expected, uint32_t new_value) override
+  {
+    __builtin_trap();
+  }
 };
 
 template <typename WORD>
-class test_memory final : public test_memory_base {
-
+class test_memory final : public test_memory_base
+{
   memory<WORD> mem;
 
 public:
+  WORD read(uint64_t phys_addr, WORD) override { return mem.read(phys_addr); }
 
-  WORD read(uint64_t phys_addr, WORD) override
-  {
-    return mem.read(phys_addr);
-  }
+  WORD reads(uint64_t phys_addr) { return read(phys_addr, WORD()); }
 
-  WORD reads(uint64_t phys_addr)
-  {
-    return read(phys_addr, WORD());
-  }
-
-  void write(uint64_t phys_addr, WORD value)
-  {
-    mem.write(phys_addr, value);
-  }
+  void write(uint64_t phys_addr, WORD value) { mem.write(phys_addr, value); }
 
   bool cmpxchg(uint64_t phys_addr, WORD expected, WORD new_value) override
   {
@@ -72,14 +69,15 @@ static bool is_bit_set(WORD v, WORD2 bit)
   return v & bit;
 }
 
-} // namespace
+}  // namespace
 
 TEST_CASE("Disabled paging works", "[translate]")
 {
-  paging_state const s { RFLAGS_RSVD, 0, 0, 0, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, 0, 0, 0, 0, 0};
   test_memory_32 mem;
 
-  SECTION("Translation succeeds without touching memory") {
+  SECTION("Translation succeeds without touching memory")
+  {
     auto tlbe_v = translate({0, linear_memory_op::access_type::READ}, s, &mem);
     REQUIRE(std::holds_alternative<tlb_entry>(tlbe_v));
 
@@ -97,15 +95,18 @@ TEST_CASE("Disabled paging works", "[translate]")
 
 TEST_CASE("32-bit paging works without PSE", "[translate]")
 {
-  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0};
   test_memory_32 mem;
 
-  SECTION("No translation for non-present PDE") {
+  SECTION("No translation for non-present PDE")
+  {
     mem.write(0, uint32_t(0));
-    REQUIRE(std::holds_alternative<page_fault_info>(translate({0, linear_memory_op::access_type::READ}, s, &mem)));
+    REQUIRE(std::holds_alternative<page_fault_info>(
+        translate({0, linear_memory_op::access_type::READ}, s, &mem)));
   }
 
-  SECTION("Self-referencing read-only page") {
+  SECTION("Self-referencing read-only page")
+  {
     mem.write(0, uint32_t(PTE_P));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
@@ -120,7 +121,8 @@ TEST_CASE("32-bit paging works without PSE", "[translate]")
     CHECK_FALSE(tlbe.attr().is_xd());
   }
 
-  SECTION("4MB large page read-only page is not recognized without CR4.PSE") {
+  SECTION("4MB large page read-only page is not recognized without CR4.PSE")
+  {
     mem.write(0, uint32_t(PTE_P | PTE_PS));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
@@ -133,10 +135,11 @@ TEST_CASE("32-bit paging works without PSE", "[translate]")
 
 TEST_CASE("32-bit paging works with PSE", "[translate]")
 {
-  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, CR4_PSE, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, CR0_PG, 0, CR4_PSE, 0, 0};
   test_memory_32 mem;
 
-  SECTION("Self-referencing read-only page") {
+  SECTION("Self-referencing read-only page")
+  {
     mem.write(0, uint32_t(PTE_P));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
@@ -148,7 +151,8 @@ TEST_CASE("32-bit paging works with PSE", "[translate]")
     CHECK(tlbe.size() == (4 << 10 /* KiB */));
   }
 
-  SECTION("4MB large page read-only page is recognized with CR4.PSE") {
+  SECTION("4MB large page read-only page is recognized with CR4.PSE")
+  {
     mem.write(0, uint32_t(PTE_P | PTE_PS));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
@@ -161,13 +165,14 @@ TEST_CASE("32-bit paging works with PSE", "[translate]")
 
 TEST_CASE("Access-once semantics")
 {
-  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0};
   test_memory_32 mem;
 
-  SECTION("Page table entries are read once when no A/D need to be set") {
+  SECTION("Page table entries are read once when no A/D need to be set")
+  {
     // These two already count as writes. So the write operations below are
     // "off-by-one".
-    mem.write(0,      0x1000 | uint32_t(PTE_P | PTE_A));
+    mem.write(0, 0x1000 | uint32_t(PTE_P | PTE_A));
     mem.write(0x1000, uint32_t(PTE_P | PTE_A | PTE_D));
 
     auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
@@ -180,8 +185,9 @@ TEST_CASE("Access-once semantics")
     CHECK(mem.count_operations(test_memory_32::operation_type::WRITE, 0x1000) == 1);
   }
 
-  SECTION("Page table entries are read twice and written once when A/D bits need to be set") {
-    mem.write(0,      0x1000 | uint32_t(PTE_P));
+  SECTION("Page table entries are read twice and written once when A/D bits need to be set")
+  {
+    mem.write(0, 0x1000 | uint32_t(PTE_P));
     mem.write(0x1000, uint32_t(PTE_P));
 
     auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
@@ -197,20 +203,19 @@ TEST_CASE("Access-once semantics")
 
 TEST_CASE("Failed atomic updates result in retry")
 {
-  paging_state const s { RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, CR0_PG, 0, 0, 0, 0};
   test_memory_32 mem;
 
-  SECTION("Failed compare-exchange results in retry") {
-    mem.write(0,      0x1000 | uint32_t(PTE_P));
+  SECTION("Failed compare-exchange results in retry")
+  {
+    mem.write(0, 0x1000 | uint32_t(PTE_P));
     mem.write(0x1000, 0xA000 | uint32_t(PTE_P));
     mem.write(0x2000, 0xB000 | uint32_t(PTE_P));
 
     // When the walker read the page directory entry, we switch the entry,
     // before it can set the accessed flag.
     mem.execute_after(test_memory_32::operation_type::READ, 0,
-                      [] (auto *m) {
-                        m->write(0, 0x2000 | uint32_t(PTE_P));
-                      });
+                      [](auto *m) { m->write(0, 0x2000 | uint32_t(PTE_P)); });
 
     auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
     REQUIRE(std::holds_alternative<tlb_entry>(res));
@@ -222,40 +227,43 @@ TEST_CASE("Failed atomic updates result in retry")
 
 TEST_CASE("Dirty bit is set correctly")
 {
-  paging_state const s { RFLAGS_RSVD, CR0_PG | CR0_WP, 0, 0, 0, 0 };
+  paging_state const s {RFLAGS_RSVD, CR0_PG | CR0_WP, 0, 0, 0, 0};
   test_memory_32 mem;
 
-  SECTION("Dirty bit is not set for read") {
-    mem.write(0,      0x1000 | uint32_t(PTE_P));
+  SECTION("Dirty bit is not set for read")
+  {
+    mem.write(0, 0x1000 | uint32_t(PTE_P));
     mem.write(0x1000, uint32_t(PTE_P));
 
     auto res = translate({0, linear_memory_op::access_type::READ}, s, &mem);
     CHECK(std::holds_alternative<tlb_entry>(res));
 
-    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
+    CHECK_FALSE(is_bit_set(mem.reads(0), PTE_D));
     CHECK_FALSE(is_bit_set(mem.reads(0x1000), PTE_D));
   }
 
-  SECTION("Dirty bit is not set for failed write") {
-    mem.write(0,      0x1000 | uint32_t(PTE_P));
+  SECTION("Dirty bit is not set for failed write")
+  {
+    mem.write(0, 0x1000 | uint32_t(PTE_P));
     mem.write(0x1000, uint32_t(PTE_P));
 
     auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
     CHECK(std::holds_alternative<page_fault_info>(res));
 
-    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
+    CHECK_FALSE(is_bit_set(mem.reads(0), PTE_D));
     CHECK_FALSE(is_bit_set(mem.reads(0x1000), PTE_D));
   }
 
-  SECTION("Dirty bit is set in leaf level for write") {
-    mem.write(0,      0x1000 | uint32_t(PTE_P | PTE_W));
+  SECTION("Dirty bit is set in leaf level for write")
+  {
+    mem.write(0, 0x1000 | uint32_t(PTE_P | PTE_W));
     mem.write(0x1000, uint32_t(PTE_P | PTE_W));
 
     auto res = translate({0, linear_memory_op::access_type::WRITE}, s, &mem);
     CHECK(std::holds_alternative<tlb_entry>(res));
 
-    CHECK_FALSE(is_bit_set(mem.reads(0),      PTE_D));
-    CHECK      (is_bit_set(mem.reads(0x1000), PTE_D));
+    CHECK_FALSE(is_bit_set(mem.reads(0), PTE_D));
+    CHECK(is_bit_set(mem.reads(0x1000), PTE_D));
   }
 }
 
