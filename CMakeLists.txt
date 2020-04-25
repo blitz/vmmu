@@ -23,6 +23,13 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
     "MinSizeRel" "RelWithDebInfo")
 endif()
 
+option(ASAN "Enable the address sanitizer" OFF)
+
+if(ASAN)
+  set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address")
+  set (CMAKE_LINKER_FLAGS "${CMAKE_LINKER_FLAGS} -fsanitize=address")
+endif()
+
 option(BUILD_COVERAGE "Build with code coverage instrumentation" OFF)
 
 if(BUILD_COVERAGE)
