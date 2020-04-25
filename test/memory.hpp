@@ -1,13 +1,13 @@
 #pragma once
 
 #include <algorithm>
+#include <cassert>
 #include <cstdint>
 #include <forward_list>
 #include <functional>
 #include <map>
 #include <tuple>
 
-#include "vmmu_utilities.hpp"
 
 // An exception that is thrown when the memory class is asked to access memory
 // that has no defined value.
@@ -119,7 +119,7 @@ private:
 public:
   void write(uint64_t address, WORD value)
   {
-    vmmu::fast_assert(is_naturally_aligned(address));
+    assert(is_naturally_aligned(address));
     async_handler_guard g {this, operation_type::WRITE, address};
 
     history.emplace_front(operation::write(address, value));
@@ -127,7 +127,7 @@ public:
 
   WORD read(uint64_t address)
   {
-    vmmu::fast_assert(is_naturally_aligned(address));
+    assert(is_naturally_aligned(address));
     async_handler_guard g {this, operation_type::READ, address};
 
     auto it = std::find_if(history.begin(), history.end(),

@@ -1,6 +1,6 @@
 #include <catch2/catch.hpp>
 
-#include "vmmu.hpp"
+#include <vmmu/vmmu.hpp>
 
 using namespace vmmu;
 

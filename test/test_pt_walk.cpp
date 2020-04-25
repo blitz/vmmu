@@ -1,7 +1,7 @@
 #include <catch2/catch.hpp>
+#include <vmmu/vmmu.hpp>
 
 #include "memory.hpp"
-#include "vmmu.hpp"
 
 using namespace vmmu;
 
