@@ -1,10 +1,3 @@
-/.scons*
-/.cache
+/build*
+/result*
 *~
-*.o
-*.gcno
-*.gcda
-*.gcov
-*.info
-/ptwalker
-/coverage

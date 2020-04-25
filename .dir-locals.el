@@ -1,9 +1,9 @@
 ;;; Directory Local Variables
 ;;; For more information see (info "(emacs) Directory Variables")
 
-((c++-mode
+((nil
+  (indent-tabs-mode)
+  (fill-column . 100))
+ (c++-mode
   (eval . (c-set-offset 'innamespace [0]))
-  (c-file-style . "gnu")
   (c-basic-offset . 2)))
-
-
