@@ -5,7 +5,7 @@
 #include <optional>
 #include <variant>
 
-#include "vmmu_utilities.hpp"
+#include "utilities.hpp"
 
 #if defined(__clang__)
 #define __VMMU_UBSAN_NO_UNSIGNED_OVERFLOW__ \

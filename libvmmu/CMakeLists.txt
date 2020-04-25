@@ -6,7 +6,7 @@ target_include_directories(
 target_compile_features(vmmu PUBLIC cxx_std_17)
 
 set_target_properties(
-  vmmu PROPERTIES PUBLIC_HEADER "include/vmmu.hpp;include/vmmu_utilities.hpp")
+  vmmu PROPERTIES PUBLIC_HEADER "include/vmmu/vmmu.hpp;include/vmmu/utilities.hpp")
 
 configure_file("vmmu.pc.in" "vmmu.pc" @ONLY)
 
