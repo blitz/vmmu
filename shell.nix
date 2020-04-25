@@ -6,5 +6,5 @@
 pkgs.mkShell {
   inputsFrom = [(import ./. { inherit sources nixpkgs pkgs; })];
 
-  buildInputs = with pkgs; [ niv cmake-format clang-tools ];
+  buildInputs = with pkgs; [ niv cmake-format clang-tools cmakeCurses gcovr ];
 }

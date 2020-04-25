@@ -1,4 +1,5 @@
-{ stdenv, cmake, ninja, catch2, nix-gitignore }:
+{ stdenv, lib, cmake, ninja, catch2, nix-gitignore, gcovr, python3Packages, buildType ? "Debug"
+, coverage ? false }:
 
 stdenv.mkDerivation {
   pname = "vmmu";
@@ -6,8 +7,11 @@ stdenv.mkDerivation {
 
   src = nix-gitignore.gitignoreSource [ ".git" "nix" "*.nix" ] ../.;
 
-  nativeBuildInputs = [ cmake ninja ];
+  nativeBuildInputs = [ cmake ninja ] ++ lib.optionals (coverage) [ gcovr ];
   checkInputs = [ catch2 ];
+
+  cmakeBuildType = buildType;
+  cmakeFlags = [ "-DBUILD_COVERAGE=${if coverage then "ON" else "OFF"}" ];
 
   doCheck = true;
 }

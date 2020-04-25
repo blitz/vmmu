@@ -10,6 +10,19 @@ project(
 include(GNUInstallDirs)
 include(CTest)
 
+set(CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake)
+
+option(BUILD_COVERAGE "Build with code coverage instrumentation" OFF)
+
+if(BUILD_COVERAGE)
+  include(CodeCoverage)
+  append_coverage_compiler_flags()
+
+  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coverage
+          DESTINATION ${CMAKE_INSTALL_DOCDIR}/vmmu/)
+
+endif()
+
 add_subdirectory(libvmmu)
 
 if(BUILD_TESTING)
