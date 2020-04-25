@@ -1,6 +1,4 @@
-{ sources ? import ./nix/sources.nix
-, nixpkgs ? sources.nixpkgs
-, pkgs ? import nixpkgs {}
-}:
+{ sources ? import ./nix/sources.nix, nixpkgs ? sources.nixpkgs
+, pkgs ? import nixpkgs { } }:
 
-pkgs.callPackage ./nix/build.nix {}
+(import ./nix/ci.nix { inherit sources nixpkgs pkgs; }).default
