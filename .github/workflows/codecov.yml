@@ -1,0 +1,15 @@
+name: "Coverage"
+on:
+  pull_request:
+  push:
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: cachix/install-nix-action@v8
+    - name: Generate Coverage Data
+      run: nix-build ./nix/ci.nix -A coverage
+    - name: Upload Coverage Data
+      run: |
+        bash <(curl -s https://codecov.io/bash) -f ./result/share/doc/vmmu/coverage-xml.xml

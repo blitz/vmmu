@@ -36,7 +36,7 @@ if(BUILD_COVERAGE)
   include(CodeCoverage)
   append_coverage_compiler_flags()
 
-  install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/coverage
+  install(FILES ${CMAKE_CURRENT_BINARY_DIR}/coverage-xml.xml
           DESTINATION ${CMAKE_INSTALL_DOCDIR}/vmmu/)
 
 endif()

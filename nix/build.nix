@@ -5,7 +5,7 @@ stdenv.mkDerivation {
   pname = "vmmu";
   version = "0.9-dev";
 
-  src = nix-gitignore.gitignoreSource [ ".git" "nix" "*.nix" ] ../.;
+  src = nix-gitignore.gitignoreSource [ ".git" ".github" "nix" "*.nix" ] ../.;
 
   nativeBuildInputs = [ cmake ninja ] ++ lib.optionals (coverage) [ gcovr ];
   checkInputs = [ catch2 ];
