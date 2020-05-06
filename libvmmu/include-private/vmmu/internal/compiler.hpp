@@ -1,13 +1,13 @@
 #pragma once
 
-namespace vmmu
+namespace vmmu::internal
 {
-// Utilities
 
 inline bool likely(bool c)
 {
   return __builtin_expect(c, true);
 }
+
 inline bool unlikely(bool c)
 {
   return __builtin_expect(c, false);
@@ -16,12 +16,6 @@ inline bool unlikely(bool c)
 [[noreturn]] inline void unreachable()
 {
   __builtin_unreachable();
-}
-
-inline void fast_assert(bool c)
-{
-  if (unlikely(not c))
-    __builtin_trap();
 }
 
 }  // namespace vmmu

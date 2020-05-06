@@ -1,5 +1,8 @@
 #pragma once
 
+#include <vmmu/vmmu.hpp>
+#include <vmmu/internal/compiler.hpp>
+
 namespace vmmu::internal
 {
 enum class paging_mode {

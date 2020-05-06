@@ -1,8 +1,19 @@
-#include <vmmu/vmmu.hpp>
+#include <cassert>
 #include <vmmu/internal/paging_mode.hpp>
+#include <vmmu/vmmu.hpp>
 
 using namespace vmmu;
 using namespace vmmu::internal;
+
+vmmu::tlb_entry::tlb_entry(uint64_t linear_addr,
+                           uint64_t phys_addr,
+                           uint8_t size_bits,
+                           tlb_attr attr)
+    : linear_addr_(linear_addr), phys_addr_(phys_addr), attr_(attr), size_bits_(size_bits)
+{
+  assert((~match_mask() & this->phys_addr()) == 0);
+  assert(size_bits_ < 64);
+}
 
 // I've tried to make the code match the written description in the manual 1:1.
 // Once all cases are covered by testing, we can dare to simplify.
@@ -230,6 +241,6 @@ bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &sta
   }
 
   // We forgot to handle a case.
-  fast_assert(false);
+  assert(false);
   return false;
 }

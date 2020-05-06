@@ -1,8 +1,8 @@
+#include <cassert>
 #include <type_traits>
-
-#include <vmmu/vmmu.hpp>
 #include <vmmu/internal/bit_range.hpp>
 #include <vmmu/internal/paging_mode.hpp>
+#include <vmmu/vmmu.hpp>
 
 // TODO
 // - Reserved bits checking
@@ -31,7 +31,7 @@ struct level {
   // Given a page table entry of this level, return the base of the next level.
   static WORD get_next_table_base(WORD pte)
   {
-    fast_assert(not(FLAGS & IS_TERMINAL));
+    assert(not(FLAGS & IS_TERMINAL));
     return NEXT_TABLE::extract_no_shift(pte);
   }
 
@@ -143,7 +143,7 @@ translate_result walk(linear_memory_op const &op,
 
     return tlbe;
   } else {
-    fast_assert(not is_leaf);
+    assert(not is_leaf);
 
     if (unlikely(table_entry != updated_entry) and
         not memory->cmpxchg(table_entry_addr, table_entry, updated_entry))
@@ -185,7 +185,7 @@ translate_result vmmu::translate(linear_memory_op const &op,
   tlb_attr attr;
   translate_result result;
 
-  fast_assert(memory);
+  assert(memory);
 
   do {
     switch (get_paging_mode(state)) {

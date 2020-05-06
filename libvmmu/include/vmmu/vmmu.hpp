@@ -5,8 +5,6 @@
 #include <optional>
 #include <variant>
 
-#include "utilities.hpp"
-
 #if defined(__clang__)
 #define __VMMU_UBSAN_NO_UNSIGNED_OVERFLOW__ \
   __attribute__((no_sanitize("unsigned-integer-overflow")))
@@ -72,8 +70,7 @@ class paging_state
 public:
   uint64_t get_pdpte(size_t i) const
   {
-    fast_assert(i < pdpte.size());
-    return pdpte[i];
+    return pdpte.at(i);
   }
 
   uint64_t get_cr3() const { return cr3; }
@@ -102,22 +99,7 @@ public:
                uint64_t cr4_,
                uint64_t efer_,
                unsigned cpl_,
-               decltype(pdpte) const &pdpte_ = {})
-      : cr3(cr3_),
-        pdpte(pdpte_),
-        cr0_wp(cr0_ & CR0_WP),
-        cr0_pg(cr0_ & CR0_PG),
-        cr4_pse(cr4_ & CR4_PSE),
-        cr4_pae(cr4_ & CR4_PAE),
-        cr4_smep(cr4_ & CR4_SMEP),
-        cr4_smap(cr4_ & CR4_SMAP),
-        efer_lme(efer_ & EFER_LME),
-        efer_nxe(efer_ & EFER_NXE),
-        rflags_ac(rflags_ & RFLAGS_AC),
-        cpl_is_supervisor(cpl_ != 3)
-  {
-    fast_assert(cpl_ <= 3);
-  }
+               decltype(pdpte) const &pdpte_ = {});
 };
 
 // A wrapper for TLB entry permissions.
@@ -180,11 +162,7 @@ struct linear_memory_op {
   linear_memory_op() = delete;
   linear_memory_op(uint64_t linear_addr_,
                    access_type type_,
-                   supervisor_type sv_type_ = supervisor_type::EXPLICIT)
-      : linear_addr(linear_addr_), type(type_), sv_type(sv_type_)
-  {
-    fast_assert(not(is_implicit_supervisor() and is_instruction_fetch()));
-  }
+                   supervisor_type sv_type_ = supervisor_type::EXPLICIT);
 };
 
 // A TLB entry for an power-of-2 naturally aligned linear memory region.
@@ -225,12 +203,7 @@ public:
 
   tlb_entry() = delete;
 
-  tlb_entry(uint64_t linear_addr, uint64_t phys_addr, uint8_t size_bits, tlb_attr attr)
-      : linear_addr_(linear_addr), phys_addr_(phys_addr), attr_(attr), size_bits_(size_bits)
-  {
-    fast_assert((~match_mask() & this->phys_addr()) == 0);
-    fast_assert(size_bits_ < 64);
-  }
+  tlb_entry(uint64_t linear_addr, uint64_t phys_addr, uint8_t size_bits, tlb_attr attr);
 };
 
 // The interface for physical memory access.
