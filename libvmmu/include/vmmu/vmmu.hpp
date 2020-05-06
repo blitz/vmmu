@@ -51,20 +51,6 @@ enum {
   EC_I = uint64_t(1) << 4,     // Access was instruction fetch
 };
 
-enum class paging_mode {
-  // Paging is disabled.
-  PHYS,
-
-  // Classic 32-bit paging.
-  PM32,
-
-  // 32-bit mode with 64-bit page tables.
-  PM32_PAE,
-
-  // 4-level 64-bit paging,
-  PM64_4LEVEL,
-};
-
 // Contains CPU state necessary for page table walks. See Intel SDM Vol. 3 4.1
 // "Paging Modes and Control Bits".
 class paging_state
@@ -100,28 +86,9 @@ public:
   bool get_cr4_smep() const { return cr4_smep; }
   bool get_cr4_smap() const { return cr4_smap; }
 
+  bool get_efer_lme() const { return efer_lme; }
   bool get_efer_nxe() const { return efer_nxe; }
   bool get_rflags_ac() const { return rflags_ac; }
-
-  // Compute the paging mode as per Intel SDM Vol. 3 4.1.1 "Three Paging Modes"
-  // (which are actually four). The conditions are written slightly verbose to
-  // match 1:1 with the manual.
-  paging_mode get_paging_mode() const
-  {
-    if (not cr0_pg)
-      return paging_mode::PHYS;
-
-    if (cr0_pg and not cr4_pae)
-      return paging_mode::PM32;
-
-    if (cr0_pg and cr4_pae and not efer_lme)
-      return paging_mode::PM32_PAE;
-
-    if (cr0_pg and cr4_pae and efer_lme)
-      return paging_mode::PM64_4LEVEL;
-
-    unreachable();
-  }
 
   // This returns whether the CPL indicates supervisor mode. This is unrelated
   // to implicit supervisor accesses.

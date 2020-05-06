@@ -1,11 +1,13 @@
 #include <type_traits>
 
 #include <vmmu/vmmu.hpp>
+#include <vmmu/internal/paging_mode.hpp>
 
 // TODO
 // - Reserved bits checking
 
 using namespace vmmu;
+using namespace vmmu::internal;
 
 namespace
 {
@@ -185,7 +187,7 @@ translate_result vmmu::translate(linear_memory_op const &op,
   fast_assert(memory);
 
   do {
-    switch (state.get_paging_mode()) {
+    switch (get_paging_mode(state)) {
     case paging_mode::PHYS:
       result = tlb_entry::no_paging();
       break;

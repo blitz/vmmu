@@ -1,12 +1,14 @@
 #include <vmmu/vmmu.hpp>
+#include <vmmu/internal/paging_mode.hpp>
 
 using namespace vmmu;
+using namespace vmmu::internal;
 
 // I've tried to make the code match the written description in the manual 1:1.
 // Once all cases are covered by testing, we can dare to simplify.
 bool vmmu::tlb_entry::allows(linear_memory_op const &op, paging_state const &state) const
 {
-  auto mode = state.get_paging_mode();
+  auto mode = get_paging_mode(state);
 
   // No permission checking without paging.
   if (mode == paging_mode::PHYS)
