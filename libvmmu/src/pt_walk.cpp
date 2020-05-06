@@ -1,6 +1,7 @@
 #include <type_traits>
 
 #include <vmmu/vmmu.hpp>
+#include <vmmu/internal/bit_range.hpp>
 #include <vmmu/internal/paging_mode.hpp>
 
 // TODO
